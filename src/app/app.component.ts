@@ -1,17 +1,37 @@
 import { Component, OnInit } from '@angular/core';
-import { ApiService } from './services/api.service';
+import { GithubService } from '../github.service';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  selector: 'app-search',
+  template: `
+    <input type="text" [(ngModel)]="username">
+    <button [disabled]="searching" (click)="search()">Search</button>
+    <div *ngIf="searching">Loading...</div>
+  `
 })
-export class AppComponent implements OnInit{
-  constructor(
-    private apiService: ApiService
-  ) {}
+export class SearchComponent implements OnInit {
+  username = '';
+  searching = false;
 
-  ngOnInit() {
-    this.apiService.getUser('johnpapa').subscribe(console.log);
+  constructor(private githubService: GithubService) { }
+
+  ngOnInit(): void {
+  }
+
+  search() {
+    this.searching = true;
+    this.githubService.getUserRepos(this.username)
+      .pipe(
+        debounceTime(500), // debounce search requests
+        distinctUntilChanged() // ignore duplicate requests
+      )
+      .subscribe((repos) => {
+        console.log(repos);
+        this.searching = false;
+      }, (error) => {
+        console.error(error);
+        this.searching = false;
+      });
   }
 }
