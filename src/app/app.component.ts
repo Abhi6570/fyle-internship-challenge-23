@@ -1,17 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { ApiService } from './services/api.service';
+import { GithubService } from '../github.service';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
-})
-export class AppComponent implements OnInit{
-  constructor(
-    private apiService: ApiService
-  ) {}
-
-  ngOnInit() {
-    this.apiService.getUser('johnpapa').subscribe(console.log);
-  }
-}
+  selector: 'app-repo-list',
+  template: `
+    <ul>
+      <li *ngFor="let repo of repos">{{ repo.name }}</li>
+    </ul>
+    <div *ngIf="loading">Loading...</div>
+    <div *ngIf="!repos.length">No
