@@ -1,19 +1,38 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { tap, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { catchError, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
-export class ApiService {
+export class GithubService {
 
-  constructor(
-    private httpClient: HttpClient
-  ) { }
+  private apiUrl = 'https://api.github.com';
+  private cache = new Map<string, any>(); // cache API responses
 
-  getUser(githubUsername: string) {
-    return this.httpClient.get(`https://api.github.com/users/${githubUsername}`);
+  constructor(private http: HttpClient) { }
+
+  getUserRepos(username: string, page = 1, perPage = 10) {
+    const cacheKey = `${username}_${page}_${perPage}`;
+    if (this.cache.has(cacheKey)) {
+      return of(this.cache.get(cacheKey));
+    }
+
+    return this.http.get(`${this.apiUrl}/users/${username}/repos`, {
+      params: {
+        page,
+        per_page: perPage
+      }
+    })
+      .pipe(
+        tap((response) => {
+          this.cache.set(cacheKey, response);
+        }),
+        catchError((error) => {
+          console.error(error);
+          return of([]);
+        })
+      );
   }
-
-  // implement getRepos method by referring to the documentation. Add proper types for the return type and params 
 }
